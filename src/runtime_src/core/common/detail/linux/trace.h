@@ -37,4 +37,6 @@
     { DTRACE_PROBE2(xrt, probe##_exit, a1, a2);  }                      \
   } xrt_trace_scope_instance{arg1, arg2}
 
+#define XRT_DETAIL_TRACE_ACTIVITY_BEGIN(activity) (void)0
 
+#define XRT_DETAIL_TRACE_ACTIVITY_END(activity) (void)0

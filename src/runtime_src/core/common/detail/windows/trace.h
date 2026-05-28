@@ -23,6 +23,7 @@
 #include "core/common/trace.h"
 #include <memory>
 #include <windows.h>
+#include <winmeta.h>
 #include <TraceLoggingProvider.h>
 
 // Forward declare the logging provider object.  The provider
@@ -105,3 +106,18 @@ add_event(Args&&... args)
     { xrt_core::trace::detail::add_event(XRT_DETAIL_PROBE(probe, _exit), a1, a2); } \
   } xrt_trace_scope_instance{arg1, arg2}
 
+#define XRT_DETAIL_TRACE_ACTIVITY_BEGIN(activity) \
+    TraceLoggingWriteActivity( \
+        g_logging_provider, \
+        #activity, \
+        &activity, \
+        NULL, \
+        TraceLoggingOpcode(WINEVENT_OPCODE_START))
+
+#define XRT_DETAIL_TRACE_ACTIVITY_END(activity) \
+    TraceLoggingWriteActivity( \
+        g_logging_provider, \
+        #activity, \
+        &activity, \
+        NULL, \
+        TraceLoggingOpcode(WINEVENT_OPCODE_STOP))
