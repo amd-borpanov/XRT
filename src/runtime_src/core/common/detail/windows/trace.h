@@ -23,6 +23,7 @@
 #include "core/common/trace.h"
 #include <memory>
 #include <windows.h>
+#include <winmeta.h>
 #include <TraceLoggingProvider.h>
 
 // Forward declare the logging provider object.  The provider
@@ -68,6 +69,18 @@ add_event(Args&&... args)
   static_assert(sizeof...(args) < 4, "Max 3 arguments supported for add_event");
 }
 
+static inline GUID update_guid_with_slotidx(const GUID & guid, uint32_t slotidx)
+{
+  GUID new_guid = guid;
+
+  new_guid.Data4[4] = slotidx & 0xFF;
+  new_guid.Data4[5] = (slotidx >> 8) & 0xFF;
+  new_guid.Data4[6] = (slotidx >> 16) & 0xFF;
+  new_guid.Data4[7] = (slotidx >> 24) & 0xFF;
+
+  return new_guid;
+}
+
 } // xrt_core::detail
 
 #define XRT_DETAIL_TOSTRING_(a) #a
@@ -105,3 +118,18 @@ add_event(Args&&... args)
     { xrt_core::trace::detail::add_event(XRT_DETAIL_PROBE(probe, _exit), a1, a2); } \
   } xrt_trace_scope_instance{arg1, arg2}
 
+#define XRT_DETAIL_TRACE_ACTIVITY_BEGIN(activity) \
+    TraceLoggingWriteActivity( \
+        g_logging_provider, \
+        #activity, \
+        &activity, \
+        NULL, \
+        TraceLoggingOpcode(WINEVENT_OPCODE_START))
+
+#define XRT_DETAIL_TRACE_ACTIVITY_END(activity) \
+    TraceLoggingWriteActivity( \
+        g_logging_provider, \
+        #activity, \
+        &activity, \
+        NULL, \
+        TraceLoggingOpcode(WINEVENT_OPCODE_STOP))

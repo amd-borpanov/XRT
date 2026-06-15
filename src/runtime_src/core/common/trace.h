@@ -48,4 +48,10 @@
 #define XRT_TRACE_POINT_SCOPE2(probe, a1, a2) \
   XRT_DETAIL_TRACE_POINT_SCOPE2(probe, a1, a2)
 
+#define XRT_TRACE_ACTIVITY_BEGIN(activity) \
+    XRT_DETAIL_TRACE_ACTIVITY_BEGIN(activity)
+
+#define XRT_TRACE_ACTIVITY_END(activity) \
+    XRT_DETAIL_TRACE_ACTIVITY_END(activity)
+
 #endif

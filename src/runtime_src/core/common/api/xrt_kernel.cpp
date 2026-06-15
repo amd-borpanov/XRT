@@ -79,6 +79,13 @@ using namespace std::chrono_literals;
 # pragma warning( disable : 4244 4267 4996 4100 4201)
 #endif
 
+#ifdef _WIN32
+#include <initguid.h>
+// {A7C4F60D-BD6D-4A86-91F6-2C3A90CC5DA7}
+DEFINE_GUID(GuidXrtRunWait,
+    0xa7c4f60d, 0xbd6d, 0x4a86, 0x91, 0xf6, 0x2c, 0x3a, 0x90, 0xcc, 0x5d, 0xa7);
+#endif
+
 ////////////////////////////////////////////////////////////////
 // Exposed for Vitis aietools as extensions to xrt_kernel.h
 // Revisit post 2020.1
@@ -4446,6 +4453,16 @@ set_dtrace_control_file(xrt::run_impl* run_impl, const std::string& path)
 ////////////////////////////////////////////////////////////////
 // xrt_kernel C++ API implmentations (xrt_kernel.h)
 ////////////////////////////////////////////////////////////////
+
+namespace {
+
+inline uint32_t slotidx_from_kernel(xrt::kernel_impl * kernel)
+{
+  auto hwctx = static_cast<xrt_core::hwctx_handle*>(kernel->get_hw_context());
+  return static_cast<uint32_t>(hwctx->get_slotidx());
+}
+
+}
 namespace xrt {
 
 run::
@@ -4466,6 +4483,13 @@ run::
 start()
 {
   XRT_TRACE_POINT_SCOPE(xrt_run_start);
+
+#if defined(_WIN32)
+  GUID XrtRunWait = xrt_core::trace::detail::update_guid_with_slotidx(GuidXrtRunWait, slotidx_from_kernel(handle->get_kernel()));
+#endif
+
+  XRT_TRACE_ACTIVITY_BEGIN(XrtRunWait);
+
   xdp::native::profiling_wrapper
     ("xrt::run::start", [this] {
       handle->start();
@@ -4498,10 +4522,18 @@ run::
 wait(const std::chrono::milliseconds& timeout_ms) const
 {
   XRT_TRACE_POINT_SCOPE(xrt_run_wait);
-  return xdp::native::profiling_wrapper("xrt::run::wait",
+  auto result = xdp::native::profiling_wrapper("xrt::run::wait",
     [this, &timeout_ms] {
       return handle->wait(timeout_ms);
     });
+
+#if defined(_WIN32)
+  GUID XrtRunWait = xrt_core::trace::detail::update_guid_with_slotidx(GuidXrtRunWait, slotidx_from_kernel(handle->get_kernel()));
+#endif
+
+  XRT_TRACE_ACTIVITY_END(XrtRunWait);
+
+  return result;
 }
 
 std::cv_status
@@ -4509,10 +4541,18 @@ run::
 wait2(const std::chrono::milliseconds& timeout_ms) const
 {
   XRT_TRACE_POINT_SCOPE(xrt_run_wait2);
-  return xdp::native::profiling_wrapper("xrt::run::wait",
+  auto result = xdp::native::profiling_wrapper("xrt::run::wait",
     [this, &timeout_ms] {
       return handle->wait_throw_on_error(timeout_ms);
     });
+
+#if defined(_WIN32)
+  GUID XrtRunWait = xrt_core::trace::detail::update_guid_with_slotidx(GuidXrtRunWait, slotidx_from_kernel(handle->get_kernel()));
+#endif
+
+  XRT_TRACE_ACTIVITY_END(XrtRunWait);
+
+  return result;
 }
 
 ert_cmd_state
