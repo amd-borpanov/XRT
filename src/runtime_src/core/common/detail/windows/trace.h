@@ -69,6 +69,18 @@ add_event(Args&&... args)
   static_assert(sizeof...(args) < 4, "Max 3 arguments supported for add_event");
 }
 
+static inline GUID update_guid_with_slotidx(const GUID & guid, uint32_t slotidx)
+{
+  GUID new_guid = guid;
+
+  new_guid.Data4[4] = slotidx & 0xFF;
+  new_guid.Data4[5] = (slotidx >> 8) & 0xFF;
+  new_guid.Data4[6] = (slotidx >> 16) & 0xFF;
+  new_guid.Data4[7] = (slotidx >> 24) & 0xFF;
+
+  return new_guid;
+}
+
 } // xrt_core::detail
 
 #define XRT_DETAIL_TOSTRING_(a) #a
